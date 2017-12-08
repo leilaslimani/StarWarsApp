@@ -1,0 +1,106 @@
+<!-- Load the Polymer.Element base class -->
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/paper-search-input/paper-search-input.html">
+<link rel="import" href="shared-styles.html">
+
+<dom-module id="my-people">
+    <template>
+        <style include="shared-styles">
+            :host {
+                display: block;
+
+                padding: 16px;
+            }
+        </style>
+
+
+        <iron-ajax auto url="https://swapi.co/api/people/" handle-as="json" on-response="handleresponse">
+        </iron-ajax>
+        <div class="card">
+            <template is="dom-if" if="[[!isTextEmpty]]">
+                <iron-ajax auto url="https://swapi.co/api/people/?search={{text}}" handle-as="json" on-response="trouverPersonne">
+                </iron-ajax>
+            </template>
+
+            <paper-search-input always-float-label label="Rechercher personne" on-input="textChange" value="{{text}}"></paper-search-input>
+            <br>
+
+
+
+
+
+            <template is="dom-repeat" items="{{data.results}}" as="personne">
+                <div class="info">
+                    <div class="gauche" on-click="detail">
+                        <strong>[[personne.name]]</strong>
+                    </div>
+                    <paper-fab icon="add" on-click="detail"></paper-fab>
+                </div>
+            </template>
+            <br>
+            <template is="dom-if" if="{{data.previous}}">
+                <paper-button class="next" toggles raised on-click="previous">Précédent</paper-button>
+            </template>
+
+            <template is="dom-if" if="{{data.next}}">
+                <paper-button class="next" raised on-click="next">Suivant</paper-button>
+            </template>
+        </div>
+    </template>
+    <script>
+        // Your new element extends the Polymer.Element base class
+        class MyPeople extends Polymer.Element {
+            static get is() { return 'my-people'; }
+
+
+            constructor() {
+                super();
+                this.text = "";
+                this.isTextEmpty = true;
+            }
+
+            handleresponse(res) {
+                this.data = res.detail.response;
+
+            }
+
+            detail(oEvent) {
+
+                let personne = oEvent.model.get('personne');
+                let temp = personne.url.substr(personne.url.lastIndexOf('people/') + 7);
+                let id = temp.substr(0, temp.length - 1);
+                console.log(id);
+                window.history.pushState({}, null, '/personnedetail/' + id);
+                window.dispatchEvent(new CustomEvent('location-changed'));
+            }
+
+            textChange() {
+                if (this.text == "")
+                    this.isTextEmpty = true;
+                else
+                    this.isTextEmpty = false;
+                console.log(this.text);
+            }
+            next() {
+                fetch(this.data.next).then(response => response.json()).then(json => { this.data = json; });
+
+            }
+            previous() {
+                fetch(this.data.previous).then(response => response.json()).then(json => { this.data = json; });
+            }
+
+            trouverPersonne(res) {
+                this.data = res.detail.response;
+                //     console.log(this.data);           
+
+            }
+        }
+        //Now, register your new custom element so the browser can use it
+        customElements.define(MyPeople.is, MyPeople);
+    </script>
+</dom-module>

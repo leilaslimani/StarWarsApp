@@ -1,0 +1,98 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="shared-styles.html">
+
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/paper-search-input/paper-search-input.html">
+
+<dom-module id="my-films">
+    <template>
+        <style include="shared-styles">
+            :host {
+                display: block;
+
+                padding: 16px;
+            }
+        </style>
+        <iron-ajax auto url="https://swapi.co/api/films" handle-as="json" on-response="handleResponse">
+        </iron-ajax>
+
+        <div class="card">
+
+            <template is="dom-if" if="[[!isTextEmpty]]">
+                <iron-ajax auto url="https://swapi.co/api/films/?search={{text}}" handle-as="json" on-response="trouverFilms">
+                </iron-ajax>
+            </template>
+
+
+            <paper-search-input always-float-label label="Rechercher film" on-input="textChange" value="{{text}}"></paper-search-input>
+            <br>
+            <br>
+            <template is="dom-repeat" items="{{data.results}}" as="film">
+                <div class="info">
+                    <div class="gauche">
+                        <strong on-click="detail"> [[film.title]] </strong>
+                    </div>
+                    <paper-fab icon="add" on-click="detail"></paper-fab>
+                </div>
+             </template>
+             <br>
+             <br>
+        </div>
+
+        </template>
+
+        </div>
+    </template>
+
+    <script>
+        class MyFilms extends Polymer.Element {
+            static get is() { return 'my-films'; }
+
+            constructor() {
+                super();
+                this.text = "";
+                this.isTextEmpty = true;
+                this.cpt = 0;
+            }
+            handleResponse(res) {
+                this.data = res.detail.response;
+            }
+
+            detail(oEvent) {
+                let film = oEvent.model.get('film');
+                let temp = film.url.substr(film.url.lastIndexOf('films/') + 6);
+                let id = temp.substr(0, temp.length - 1);
+                console.log(id);
+                window.history.pushState({}, null, '/filmdetail/' + id);
+                window.dispatchEvent(new CustomEvent('location-changed'));
+            }
+
+            textChange() {
+                if (this.text == "")
+                    this.isTextEmpty = true;
+                else
+                    this.isTextEmpty = false;
+                console.log(this.text);
+            }
+
+            trouverFilms(res) {
+                this.data = res.detail.response;
+            }
+        }
+        window.customElements.define(MyFilms.is, MyFilms);
+    </script>
+</dom-module>

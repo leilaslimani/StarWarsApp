@@ -1,0 +1,141 @@
+<!-- Load the Polymer.Element base class -->
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/paper-search-input/paper-search-input.html">
+<link rel="import" href="shared-styles.html">
+<link rel="import" href="../bower_components/iron-image/iron-image.html">
+<dom-module id="my-starshipdetail">
+    <!-- Defines the element's style and local DOM -->
+    <template>
+        <style include="shared-styles">
+            :host {
+                display: block;
+                padding: 16px;
+            }
+        </style>
+        <iron-ajax auto url="https://swapi.co/api/starships/{{idstarship}}" handle-as="json" on-response="getStarship">
+        </iron-ajax>
+        <div class="card">
+            <template is="dom-repeat" items="{{listIdPeople}}" as="idpersonne">
+                <iron-ajax auto url="https://swapi.co/api/people/{{idpersonne}}" handle-as="json" on-response="getPerson">
+                </iron-ajax>
+            </template>
+            <template is="dom-repeat" items="{{listIdFilms}}" as="idfilm">
+                <iron-ajax auto url="https://swapi.co/api/films/{{idfilm}}" handle-as="json" on-response="getFilm">
+                </iron-ajax>
+            </template>
+            <iron-image src="../images/roket.png"></iron-image>
+            <h1>{{starship.name}}</h1>
+
+            <div>
+                <p>
+                    <strong> Modèle : {{starship.model}}</strong>
+                </p>
+                <p>
+                    <strong> Manifactureur: {{starship.manufacturer}}</strong>
+                </p>
+                <p>
+                    <strong> Length : {{starship.length}}</strong>
+                </p>
+                <p>
+                    <strong> Passagers : {{starship.passengers}}</strong>
+                </p>
+                <div id="films">
+
+                    <h2>Pilots :</h2>
+                    <template is="dom-repeat" items="{{listPeople}}" as="idpersonne">
+                        <p>
+                            <div class="info">
+                                <div class="gauched">
+                                    <strong>{{idpersonne.name}}</strong>
+                                </div>
+                                <a href="personnedetail/{{idpersonne.id}}">
+                                    <paper-fab mini icon="add"></paper-fab>
+                                </a>
+                            </div>
+                        </p>
+                    </template>
+
+                </div>
+
+                <div id="pilots">
+                    <h2>Films:</h2>
+
+                    <template is="dom-repeat" items="{{listFilms}}" as="film">
+                        <p>
+                            <div class="info">
+                                <div class="gauched">
+                                    <strong> {{film.name}}</strong>
+                                </div>
+                                <a href="filmdetail/{{film.id}}">
+                                    <paper-fab mini icon="add"></paper-fab>
+                                </a>
+                            </div>
+                        </p>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </template>
+    <script>
+        // Your new element extends the Polymer.Element base class
+        class MyStarshipDetail extends Polymer.Element {
+            static get is() { return 'my-starshipdetail'; }
+
+            constructor() {
+                super();
+                this.listFilms = [];
+                this.listIdFilms = [];
+                this.listUrlFilms = [];
+                this.listPeople = [];
+                this.listIdPeople = [];
+                this.listUrlPeople = [];
+            }
+
+
+            getStarship(res) {
+                this.starship = res.detail.response;
+
+                this.listUrlPeople = res.detail.response.pilots;
+                this.listUrlFilms = res.detail.response.films;
+                this.listUrlPeople.forEach(function (element) {
+                    let temp = element.substr(element.lastIndexOf('people/') + 7);
+                    let id = temp.substr(0, temp.length - 1);
+                    this.listIdPeople.push(id);
+                }, this);
+
+                this.listUrlFilms.forEach(function (element) {
+                    let temp = element.substr(element.lastIndexOf('films/') + 6);
+                    let id = temp.substr(0, temp.length - 1);
+                    this.listIdFilms.push(id);
+                }, this);
+
+
+                this.set('listIdPeople', this.listIdPeople.slice());
+
+                this.set('listIdFilms', this.listIdFilms.slice());
+                this.listFilms = [];
+                this.listPeople = [];
+            }
+
+            getPerson(res) {
+                let personne = res.detail.response;
+                this.push("listPeople", { id: res.model.get('idpersonne'), name: personne.name });
+            }
+            getFilm(res) {
+                // console.log(res.model.get('idFilm'));
+                let film = res.detail.response;
+                console.log(film);
+                this.push("listFilms", { id: res.model.get('idfilm'), name: film.title });
+                console.log(this.listFilms);
+            }
+        }
+        //Now, register your new custom element so the browser can use it
+        customElements.define(MyStarshipDetail.is, MyStarshipDetail);
+    </script>
+</dom-module>

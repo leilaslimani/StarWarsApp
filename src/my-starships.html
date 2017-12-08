@@ -1,0 +1,110 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/paper-search-input/paper-search-input.html">
+<link rel="import" href="shared-styles.html">
+<dom-module id="my-starships">
+    <template>
+        <style include="shared-styles">
+            :host {
+                display: block;
+
+                padding: 16px;
+            }
+        </style>
+
+
+        <iron-ajax auto url="https://swapi.co/api/starships/" handle-as="json" on-response="handleResponse">
+        </iron-ajax>
+        <div class="card">
+
+            <template is="dom-if" if="[[!isTextEmpty]]">
+                <iron-ajax auto url="https://swapi.co/api/starships/?search={{text}}" handle-as="json" on-response="trouverStarships">
+                </iron-ajax>
+            </template>
+
+            <paper-search-input always-float-label label="Rechercher starship" on-input="textChange" value="{{text}}"></paper-search-input>
+
+            <br>
+
+            <template is="dom-repeat" items="{{data.results}}" as="starship">
+                <div class="info">
+                    <div class="gauche" on-click="detail">
+                        <strong>[[starship.name]]</strong>
+                    </div>
+                    <paper-fab icon="add" on-click="detail"></paper-fab>
+                </div>
+            </template>
+            <br>
+            <template is="dom-if" if="{{data.previous}}">
+                <paper-button id="next" toggles raised on-click="previous">Précédent</paper-button>
+            </template>
+            <template is="dom-if" if="{{data.next}}">
+                <paper-button id="next" raised on-click="next">Suivant</paper-button>
+            </template>
+        </div>
+    </template>
+</dom-module>
+<script>
+    class MyStarships extends Polymer.Element {
+        static get is() { return 'my-starships'; }
+
+
+        constructor() {
+            super();
+            this.text = "";
+            this.isTextEmpty = true;
+        }
+
+        handleResponse(resp) {
+            this.data = resp.detail.response;
+        }
+
+        detail(oEvent) {
+
+            let starship = oEvent.model.get('starship');
+            let temp = starship.url.substr(starship.url.lastIndexOf('starships/') + 10);
+            let id = temp.substr(0, temp.length - 1);
+            window.history.pushState({}, null, '/starshipdetail/' + id);
+            window.dispatchEvent(new CustomEvent('location-changed'));
+        }
+
+        textChange() {
+            if (this.text == "")
+                this.isTextEmpty = true;
+            else
+                this.isTextEmpty = false;
+        }
+
+        trouverStarships(res) {
+            this.data = res.detail.response;
+        }
+
+        next() {
+            fetch(this.data.next).then(response => response.json()).then(json => { this.data = json; });
+
+        }
+
+        previous() {
+            fetch(this.data.previous).then(response => response.json()).then(json => { this.data = json; });
+        }
+    }
+
+    window.customElements.define(MyStarships.is, MyStarships);
+</script>
+</dom-module>
